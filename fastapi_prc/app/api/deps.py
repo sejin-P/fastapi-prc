@@ -1,4 +1,4 @@
-from app.api.db.init_db import SessionLocal
+from ..api.db.init_db import SessionLocal
 
 def get_db():
     try:

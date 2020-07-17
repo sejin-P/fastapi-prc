@@ -1,0 +1,11 @@
+{
+  "name": "fastapi-prc",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "git@github.com:sejin-P/fastapi-prc.git",
+  "author": "sejin-P <chunpark37@gmail.com>",
+  "license": "MIT",
+  "scripts": {
+    "start:server": "uvicorn fastapi_prc.app.main:app --reload"
+  }
+}
