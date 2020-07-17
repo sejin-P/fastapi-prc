@@ -1,35 +1,24 @@
-from typing import Any, List
+from typing import List
 
-import sqlalchemy
-from fastapi import APIRouter, HTTPException
-from passlib.context import CryptContext
+from fastapi import APIRouter, HTTPException, Depends
+from sqlalchemy.orm import Session
 
 from .. import schemas
-from ..db import tables
-from ..db.init_db import database
+from ... import crud
 
 router = APIRouter()
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
-@router.post("/", response_model=schemas.users.UserIn)
-async def create_user(user_info: schemas.UserCreate) -> Any:
-    query = tables.Users.select(sqlalchemy.text('email = {}'.format(user_info.email)))
-    user = await database.fetch_one(query)
-    if user:
-        raise HTTPException(
-            status_code=400,
-            detail="This user already exist"
-        )
-
-    query = tables.Users.insert().values(email=user_info.email, password_hash=pwd_context.hash(user_info.password),
-                                         birth=user_info.birth)
-    last_record_id = await database.execute(query)
-    return schemas.users.UserIn(email=user_info.email, birth=user_info.birth)
+@router.post("/", response_model=schemas.users.UserResponse)
+async def create_user(user: schemas.users.UserCreate, db: Session = Depends(crud.get_db)):
+    db_user = await crud.get_user_by_email(db, email=user.email)
+    if db_user:
+        raise HTTPException(status_code=400, detail="Email already exist")
+    created = await crud.create_user(db=db, user=user)
+    return created
 
 
 @router.get("/", response_model=List[schemas.users.UserResponse])
-async def all_user() -> Any:
-    query = tables.Users.select()
-    users = await database.fetch_all(query)
-    return users
+async def all_users(skip: int = 0, limit: int = 100, db: Session = Depends(crud.get_db)):
+    users = await crud.get_users(db, skip=skip, limit=limit)
+    return [schemas.users.UserResponse(id=user.id, email=user.email, birth=user.birth) for user in users]
