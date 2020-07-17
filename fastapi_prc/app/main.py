@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .api.api import api_router
+from .api.db.init_db import database
 
 app = FastAPI()
 
@@ -16,6 +17,16 @@ app.add_middleware(
 @app.get("/")
 def sayhello():
     return {"message": "hello"}
+
+
+@app.on_event("startup")
+async def startup():
+    await database.connect()
+
+
+@app.on_event("shutdown")
+async def shutdown():
+    await database.disconnect()
 
 
 app.include_router(api_router)
