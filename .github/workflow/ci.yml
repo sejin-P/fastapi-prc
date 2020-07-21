@@ -1,0 +1,45 @@
+name: Test
+on: [ pull_request ]
+jobs:
+  check-commit-message:
+    name: Check Commit Message
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check Commit Message
+        uses: gsactions/commit-message-checker@v1
+        with:
+          pattern: '^((feat|fix|build|ci|chore|docs|pref|improvement|refactor|revert|style|test)?(?:\(([^\A-Z)\s]+)?\))?(\!)?: (.+))(\n{2}|$)(((?:^.+(\n|$))+(?:\n|$){0,2}?)+(?:(^.+(\n|$))+)|(?:^.+$))?'
+          error: 'The commit message must follow the format of the Conventional Commits (https://conventionalcommits.org/).'
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Set up Python 3.7
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.7
+
+    - name: Install and set up Poetry
+      run: |
+        curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python
+        source $HOME/.poetry/env
+        poetry config virtualenvs.in-project true
+
+    - name: Set up cache
+      uses: actions/cache@v2
+      with:
+        path: .venv
+        key: ${{ runner.os }}-poetry-${{ hashFiles('**/poetry.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-poetry-
+
+    - name: Install dependencies
+      run: |
+        source $HOME/.poetry/env
+        poetry install
+
+    - name: Test with pytest
+      run: |
+        source $HOME/.poetry/env
+        poetry run pytest tests
