@@ -1,7 +1,7 @@
 import logging
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 
 import emails
 from emails.template import JinjaTemplate
@@ -49,3 +49,11 @@ def generate_password_token(email: str) -> str:
         "sub": email,
     }, config.SECRET_KEY, algorithm="HS256")
     return encoded_jwt
+
+
+def verify_token(token: str) -> Optional[str]:
+    try:
+        decoded_token = jwt.decode(token=token, key=config.SECRET_KEY, algorithms="HS256")
+        return decoded_token["sub"]
+    except jwt.JWTError:
+        return None

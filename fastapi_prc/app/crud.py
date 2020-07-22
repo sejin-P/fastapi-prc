@@ -36,8 +36,8 @@ async def user_auth(db: Session, *, email: str, password: str):
 
 
 async def reset_password(db: Session, email: str, new_password: str):
-    db.query(tables.Users).filter(tables.Users.email == email).update({"password_hash": new_password})
-
+    user = db.query(tables.Users).filter(tables.Users.email == email).update({"password_hash": new_password})
+    db.commit()
 
 async def create_user_item(db: Session, item: items.ItemCreate, user_id: int):
     db_item = tables.Item(title=item.title, price=item.price, description=item.description, owner_id=user_id)

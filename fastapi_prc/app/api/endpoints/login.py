@@ -1,13 +1,15 @@
 from datetime import timedelta
-from fastapi import APIRouter, HTTPException
+from typing import Any
+
+from fastapi import APIRouter, HTTPException, Body
 from fastapi import Depends
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
-from typing import Any
 
-from fastapi_prc.app import crud, config, security
+from fastapi_prc.app import crud, config, security, utils
 from fastapi_prc.app.api import schemas
 from fastapi_prc.app.api.db.init_db import get_db
+from fastapi_prc.app.security import pwd_context
 from fastapi_prc.app.utils import generate_password_token, send_reset_password_email
 
 router = APIRouter()
@@ -20,7 +22,7 @@ async def login_access_token(db: Session = Depends(get_db), form_data: OAuth2Pas
         raise HTTPException(status_code=400, detail="Invalid email or password")
     access_token_expires = timedelta(minutes=config.ACCESS_TOKEN_EXPIRE_MINUTE)
     return {
-        "access_token": security.create_access_token(user.id, expires_delta=access_token_expires),
+        "access_token": security.create_access_token(user.email, expires_delta=access_token_expires),
         "token_type": "bearer",
     }
 
@@ -36,3 +38,14 @@ async def recover_password(user_info: schemas.UserRecover, db: Session = Depends
     await crud.reset_password(db, email=user_info.email, new_password=new_password)
     send_reset_password_email(email_to=user.email, email=user_info.email, token=new_password)
     return {"message": "New Password email sent"}
+
+
+@router.post("/password-reset/", response_model=schemas.Msg)
+async def reset_password(token: str = Body(...), new_password: str = Body(...), db: Session = Depends(get_db)) -> Any:
+    email = utils.verify_token(token)
+    if not email:
+        raise HTTPException(status_code=404, detail="Unauthorized, login again")
+    new_password_hash = pwd_context.hash(new_password)
+    await crud.reset_password(db, email, new_password_hash)
+    return {"message": "password reset successfully"}
+
