@@ -8,5 +8,5 @@ SMTP_PORT = "867"
 SERVER_HOST = "localhost"
 
 PROJECT_NAME="fastapi-prc"
-EMAIL_TEMPLATES_DIR = "/app/email-templates"
+EMAIL_TEMPLATES_DIR = "fastapi_prc/email_templates"
 EMAIL_RESET_TOKEN_EXPIRE_HOURS = 48

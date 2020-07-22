@@ -45,7 +45,7 @@ def generate_password_token(email: str) -> str:
     exp = expires.timestamp()
     encoded_jwt = jwt.encode({
         "exp": exp,
-        "now": now,
+        "nbf": now,
         "sub": email,
     }, config.SECRET_KEY, algorithm="HS256")
     return encoded_jwt

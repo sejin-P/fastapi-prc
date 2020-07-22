@@ -13,7 +13,7 @@ from fastapi_prc.app.utils import generate_password_token, send_reset_password_e
 router = APIRouter()
 
 
-@router.post("/access-token", response_model=schemas.Token)
+@router.post("/access-token/", response_model=schemas.Token)
 async def login_access_token(db: Session = Depends(get_db), form_data: OAuth2PasswordRequestForm = Depends()) -> Any:
     user = await crud.user_auth(db=db, email=form_data.username, password=form_data.password)
     if not user:
@@ -25,7 +25,7 @@ async def login_access_token(db: Session = Depends(get_db), form_data: OAuth2Pas
     }
 
 
-@router.post("/password-recover", response_model=schemas.Msg)
+@router.post("/password-recover/", response_model=schemas.Msg)
 async def recover_password(user_info: schemas.UserRecover, db: Session = Depends(get_db)):
     user = await crud.get_user_by_email(db, user_info.email)
     if not user:
@@ -35,4 +35,4 @@ async def recover_password(user_info: schemas.UserRecover, db: Session = Depends
     new_password = generate_password_token(user_info.email)
     await crud.reset_password(db, email=user_info.email, new_password=new_password)
     send_reset_password_email(email_to=user.email, email=user_info.email, token=new_password)
-    return {"msg": "New Password email sent"}
+    return {"message": "New Password email sent"}
